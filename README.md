@@ -19,5 +19,5 @@ You can specify maximum timeout the server should work:
 4. You can terminate the server and clients at any time using `Ctrl + C ` keys combination or wait for the server to finish working after the specifyed timeout (`-t` flag)
 ### Known issues
 - No under-load test was performed, only simple acceptance.
-- The server can not be gracefully closed, only terminated by kill signal (`Ctrl + C`) or finish after a timeout.
-- Each new connection will increase memory use by some small amount  (a leak), due to storage of all std::pthread objects. They will be released when the object is deleted.
+- No CLI was added to gracefully close the main(). You can only terminate it by kill signal (`Ctrl + C`) or finish execution specifying a timeout. To be mentioned here, the implemented server object (`class Server`) do supports gracefull start and stop, please see the usage in main().
+- Each new connection accepted will increase memory use by some small amount  (yep, there's a leak), due to storage of all std::pthread objects. They will be released when the object is deleted.
