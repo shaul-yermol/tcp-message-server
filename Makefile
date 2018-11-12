@@ -10,7 +10,7 @@ LIBS= -lpthread
 _DEPS = Server.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = Server.o 
+_OBJ = Server.o main.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp $(DEPS)
@@ -23,4 +23,4 @@ Server: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm  $(ODIR)/*.o *~ core $(INCDIR)/*~ 
+	rm  $(ODIR)/*.o Server
