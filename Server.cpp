@@ -59,7 +59,7 @@ void Server::HandleConnection(int conn_fd)
             }
         }
 
-        if (message_start_ptr > &buf[0] && next_message_ptr > message_start_ptr)
+        if (message_start_ptr > &buf[0])
         {
             size_t last_message_size = message_start_ptr - &buf[0];
             char tmp_buf[last_message_size] = {0};
