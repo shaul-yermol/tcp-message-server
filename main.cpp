@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[])
 {
+    // Parsing the command line arguments.
     int opt;
     int port = -1;
     int timeout = 0;
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
 
     volatile bool running = true;
 
+    // Sample code to show usage of Server class constructor
     Server* s = new Server(port, [] (const std::shared_ptr<const std::vector<char>> message) {
         if (message->size() > 0 )
             printf("Callback with message: %s\n", message->data());
@@ -42,10 +44,12 @@ int main(int argc, char *argv[])
             printf("Callback with empty message.\n");
     });
     
+    // Sample code to show usage of Start() function. Keep in mind, that this function is blocking.
     std::thread t ([&s](){
         s->Start();
     });
     
+    // Sample code to show usage of PopMessage() function
     std::thread t1 ([&s, &running](){
         while(running){
             auto message = s->PopMessage();
@@ -59,6 +63,7 @@ int main(int argc, char *argv[])
         }
     });
 
+    // Sample code to show usage of PopMessageBlocking() function
     std::thread t2 ([&s, &running](){
         while(running){
             auto message = s->PopMessageBlocking();
@@ -80,6 +85,8 @@ int main(int argc, char *argv[])
     
     printf("Stop server!\n");
     running = false;
+
+    // Sample code to show usage of Stop() function
     s->Stop();
 
     printf("Joining listnenig thread...\n");
@@ -89,5 +96,5 @@ int main(int argc, char *argv[])
     printf("Joining polling thread...\n");
     t2.join();
 
-    free(s);
+    delete(s);
 }

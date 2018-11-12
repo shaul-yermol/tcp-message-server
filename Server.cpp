@@ -30,21 +30,41 @@ void Server::HandleConnection(int conn_fd)
 {
     printf("Started new trhread handling connection...");
 
+    // Buffer to receive the incoming messages. Allocated on stack for now.
     char buf[BUFFER_SIZE] = {0};
     char* next_message_ptr = &buf[0];
     do 
     {
+        // Select between the opened socket and the stop-listening pipe.
+        fd_set rfds;
+        int nFDS = 0;
+        FD_ZERO(&rfds);
+        FD_SET(conn_fd, &rfds);
+        nFDS = std::max(nFDS, conn_fd+1);
+        FD_SET(m_shouldStopPipeFD[0], &rfds);
+        nFDS = std::max(nFDS, m_shouldStopPipeFD[0] + 1);
+
+        int retval = select(nFDS, &rfds, NULL, NULL, NULL);
+        if (retval == -1)
+            handle_error("select()");
+        else if (retval) 
+        {
+            if (FD_ISSET(m_shouldStopPipeFD[0], &rfds))
+            {
+                printf("Communication thread received stop command.\n");
+                break;
+            }
+        }
+
+        // Wait to receive the next message.
         int read = recv(conn_fd, next_message_ptr, &buf[BUFFER_SIZE] - next_message_ptr, 0);
         next_message_ptr += read;
-
-        if (!read) 
+        if (read <= 0)
             break; // done reading
-
-        if (read < 0)
-            handle_error("Client read failed\n");
 
         auto bufferForCallback = std::make_shared<std::vector<char>>();
 
+        // Parse incoming data. \n should be message delimiter.
         char* message_start_ptr = &buf[0];
         for (char* curr_ptr = message_start_ptr; curr_ptr < next_message_ptr; curr_ptr++)
         {
@@ -55,16 +75,21 @@ void Server::HandleConnection(int conn_fd)
                 auto message = std::make_shared<std::vector<char>>();
                 message->resize(curr_ptr - message_start_ptr);
                 memcpy(message->data(), message_start_ptr, curr_ptr - message_start_ptr);
+                // Call provided callback with the message
                 m_callback(message);
+                // Push message to internal queue
                 { // scope for mutex
                     std::lock_guard<std::mutex> lock(m_messagesQueueMutex);
                     m_messagesQueue.push(message);
                 }
+                // Notify one of threads waiting to perform PopMessageBlocking()
                 m_messagesQueueCondVar.notify_one();
                 message_start_ptr = curr_ptr + 1;
             }
         }
 
+        // The on-stack buffer is being reused for receiving more message.
+        // So here we handle case when some message arrives in parts.
         if (message_start_ptr > &buf[0])
         {
             size_t last_message_size = message_start_ptr - &buf[0];
@@ -86,15 +111,24 @@ void Server::Stop()
     m_shouldStop = true;
     if (m_shouldStopPipeFD[1])
         write(m_shouldStopPipeFD[1],"0", 1);
+    std::for_each(m_openThreads.begin(), m_openThreads.end(), [](std::thread& t) {
+        if (t.joinable()) {
+            t.join();
+        }
+    });
+    m_openThreads.clear();
     m_messagesQueueCondVar.notify_all();
 }
 
 void Server::Start()
 {
+    // Create a self-pipe, which serves purpose of interrupting the accept() callback.
     if (pipe(m_shouldStopPipeFD) < 0) 
     {
         handle_error("error in opening pipe!");
     }
+
+    // Create a socket
     m_listeningSocketFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     int opt = 1;
     //bind the socket to the address
@@ -103,12 +137,11 @@ void Server::Start()
         handle_error("error in binding port!");
     }
 
-    sockaddr_in serv_addr;
-    
+    // Bind and listen on socket to the specified port.
+    sockaddr_in serv_addr;    
     serv_addr.sin_family=AF_INET;
     serv_addr.sin_port=htons(m_port);
     serv_addr.sin_addr.s_addr=INADDR_ANY;
- 
     if(bind(m_listeningSocketFD,(struct sockaddr*)&serv_addr,sizeof(serv_addr))<0)
     {
         close(m_listeningSocketFD);
@@ -125,9 +158,7 @@ void Server::Start()
 
     do 
     {
-        sockaddr_in client_addr;
-        unsigned int client_addr_len =  sizeof(sockaddr_in);
-
+        // Select between the opened socket and the stop-listening pipe.
         fd_set rfds;
         int nFDS = 0;
         FD_ZERO(&rfds);
@@ -137,8 +168,6 @@ void Server::Start()
         nFDS = std::max(nFDS, m_shouldStopPipeFD[0] + 1);
 
         int retval = select(nFDS, &rfds, NULL, NULL, NULL);
-        /* Don't rely on the value of tv now! */
-
         if (retval == -1)
             handle_error("select()");
         else if (retval) 
@@ -149,8 +178,11 @@ void Server::Start()
                 break;
             }
         }
-        printf("Incoming connection from client.\n");
 
+        // Accept connection from client.
+        printf("Incoming connection from client.\n");
+        sockaddr_in client_addr;
+        unsigned int client_addr_len =  sizeof(sockaddr_in);
         int conn_fd = accept(m_listeningSocketFD, (sockaddr*)&client_addr, &client_addr_len);
         if (conn_fd < 0) 
         {
@@ -159,11 +191,18 @@ void Server::Start()
         }
         printf("connection accepted!\n");
 
+        // Create a separate thread which will deal with this connected client. 
         m_openThreads.push_back(std::thread(&Server::HandleConnection, this, conn_fd));
     } while (!m_shouldStop);
 
     if (m_listeningSocketFD)
         close(m_listeningSocketFD);
+    if (m_shouldStopPipeFD[0])
+        close(m_shouldStopPipeFD[0]);
+    if (m_shouldStopPipeFD[1])
+        close(m_shouldStopPipeFD[1]);
+    m_shouldStopPipeFD[0] = 0;
+    m_shouldStopPipeFD[1] = 0;
 }
 
 Server::~Server()
@@ -171,11 +210,6 @@ Server::~Server()
     if (!m_shouldStop) {
         Stop();
     }
-    std::for_each(m_openThreads.begin(), m_openThreads.end(), [](std::thread& t) {
-        if (t.joinable()) {
-            t.join();
-        }
-    });
 }
 
 std::shared_ptr<std::vector<char>> Server::PopMessage()
