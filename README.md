@@ -11,11 +11,13 @@ You can use `make` command in the terminal.
 ### Testing
 1. Run server from the terminal using this command:
 `Server -p [port number] `
+You can specify maximum timeout the server should work: 
+`Server -p [port number] -t [time in seconds]`
 2. Run multiple clients from terminal using this command:
 `nc localhost [port number]`
 3. Type messages in the `nc` prompt, `enter` key (i.e. `\n`) can be used to finish a message.
-4. You can terminate the server and clients at any time using `Ctrl + C ` keys combination.
+4. You can terminate the server and clients at any time using `Ctrl + C ` keys combination or wait for the server to finish working after the specifyed timeout (`-t` flag)
 ### Known issues
 - No under-load test was performed, only simple acceptance.
-- The server can not be gracefully closed, only terminated by kill signal (`Ctrl + C`)
-- Each new connection will increase memory use by some small amount  (a leak), due to storage of all std::pthread objects.
+- The server can not be gracefully closed, only terminated by kill signal (`Ctrl + C`) or finish after a timeout.
+- Each new connection will increase memory use by some small amount  (a leak), due to storage of all std::pthread objects. They will be released when the object is deleted.
