@@ -9,12 +9,12 @@ Linux, g++, make
 ##### Build process
 You can use `make` command in the terminal.
 ### Testing
-Run server from the terminal using this command:
+1. Run server from the terminal using this command:
 `Server -p [port number] `
-Run multiple clients from terminal using this command:
+2. Run multiple clients from terminal using this command:
 `nc localhost [port number]`
-Type messages in the `nc` prompt, `enter` key (i.e. `\n`) can be used to finish a message.
-You can terminate the server and clients at any time using `Ctrl + C ` keys combination.
+3. Type messages in the `nc` prompt, `enter` key (i.e. `\n`) can be used to finish a message.
+4. You can terminate the server and clients at any time using `Ctrl + C ` keys combination.
 ### Known issues
 - No under-load test was performed, only simple acceptance.
 - The server can not be gracefully closed, only terminated by kill signal (`Ctrl + C`)
