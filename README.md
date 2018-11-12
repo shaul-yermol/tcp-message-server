@@ -1,6 +1,6 @@
 # Server.cpp
 
-This project is a simple example of a TCP message server written in C++. The server should listen on a given port, receive connections from clients and print them to `stdout`. For every message received it should reply the client with "OK" message. 
+This project is a simple example of a TCP message server written in C++. The server should listen on a given TCP port, receive messages from clients and print them to `stdout`. For every message received it should reply the client with "OK" message. 
 ### Message format
 The message can contain any printable characters, `\n` caracter is a message delimiter. Maximum message length should not exceed `1024` characters (including delimiters).
 ### Build
@@ -13,7 +13,7 @@ You can use `make` command in the terminal.
 `Server -p [port number] `
 You can specify maximum timeout the server should work: 
 `Server -p [port number] -t [time in seconds]`
-2. Run multiple clients from terminal using this command:
+2. Run one (or more) clients from a terminal using this command:
 `nc localhost [port number]`
 3. Type messages in the `nc` prompt, `enter` key (i.e. `\n`) can be used to finish a message.
 4. You can terminate the server and clients at any time using `Ctrl + C ` keys combination or wait for the server to finish working after the specifyed timeout (`-t` flag)
