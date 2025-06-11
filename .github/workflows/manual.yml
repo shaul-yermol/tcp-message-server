@@ -38,18 +38,18 @@ jobs:
 
       - name: Merge RC to main
         run: |
-          git checkout main
+          git checkout master
           git merge --no-ff ${{ inputs.rcBranch }} -m "Sync after ${{ inputs.tagName }}"
-          git push origin main
+          git push origin master
 
       - name: Create next RC branch
         run: |
           git checkout -b ${{ inputs.nextRcBranch }}
           git push origin ${{ inputs.nextRcBranch }}
 
-      - name: Merge main to next RC branch
+      - name: Merge master to next RC branch
         run: |
           git checkout ${{ inputs.nextRcBranch }}
-          git merge --no-ff main -m "Sync after ${{ inputs.tagName }}"
+          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
 
