@@ -39,8 +39,8 @@ jobs:
       - name: Set up Git
         run: |
           git config --global user.name "github-actions"
-          git config --global user.email "
-      
+          git config --global user.email "<github-actions@users.noreply.github.com>"
+
       - name: Validate inputs
         run: |
           echo "RC Branch: ${{ inputs.rcBranch }}"
