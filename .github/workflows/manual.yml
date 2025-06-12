@@ -109,7 +109,6 @@ jobs:
       - name: Create next RC branch
         id: create_next_rc
         run: |
-          # check if next RC branch exists, if not create it
           exists=$(git branch -r | grep "origin/${{ inputs.nextRcBranch }}")
           if [ -z "$exists" ]; then
             echo "Next RC branch does not exist, creating it."
