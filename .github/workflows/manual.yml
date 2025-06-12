@@ -63,3 +63,4 @@ jobs:
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
 
+      # test step
