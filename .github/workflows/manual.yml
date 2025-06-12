@@ -121,6 +121,10 @@ jobs:
             git push origin ${{ inputs.nextRcBranch }} || true
           else
             echo "Next RC branch already exists, skipping creation."
+            git fetch origin ${{ inputs.nextRcBranch }}
+            git checkout ${{ inputs.nextRcBranch }}
+            git pull origin ${{ inputs.nextRcBranch }}
+            git log | head -n 10
           fi
 
       - name: Merge master to next RC branch
@@ -152,5 +156,5 @@ jobs:
           commit-message: "Merge ${{ inputs.rcBranch }} into rc after tag ${{ inputs.tagName }}"
           # token: ${{ secrets.GITHUB_TOKEN }}
 
-          # test for conflict 2
+          # test for conflict 22
 
