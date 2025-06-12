@@ -49,11 +49,6 @@ jobs:
           echo "RC Branch: ${{ inputs.rcBranch }}"
           echo "Tag Name: ${{ inputs.tagName }}"
           echo "Next RC Branch: ${{ inputs.nextRcBranch }}"
-          # Ensure the tag name is valid
-          if [[ ! "${{ inputs.tagName }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-            echo Invalid tag name: ${{ inputs.tagName }}"
-            exit 1
-          fi
           # Ensure the branch exists
           if ! git show-ref --verify --quiet refs/heads/${{ inputs.rcBranch }}; then
             echo Branch ${{ inputs.rcBranch }} does not exist."
