@@ -133,7 +133,7 @@ jobs:
 
       - name: Create pull request to master
         uses: peter-evans/create-pull-request@v7
-        if: env.MERGE_TO_RC_FAILED == 'TRUE'
+        if: ${ env.MERGE_TO_RC_FAILED == 'TRUE' }
         with:
           branch: ${{ inputs.nextRcBranch }}
           title: "Sync after ${{ inputs.tagName }}"
