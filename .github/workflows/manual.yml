@@ -130,8 +130,8 @@ jobs:
           git checkout ${{ inputs.nextRcBranch }}
           git pull origin ${{ inputs.nextRcBranch }}
           git log | head -n 10
-          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || echo "merge_status=failed" >> "$GITHUB_ENV"
-          if ${{ env.merge_status }} == 'failed'; then
+          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export merge_status=failed && echo "merge_status=failed" >> "$GITHUB_ENV"
+          if [ -n "$merge_status" ]; then
             echo "Merge to next RC branch failed, please resolve conflicts manually."
             exit -1
           fi
