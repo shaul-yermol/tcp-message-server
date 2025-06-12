@@ -81,16 +81,16 @@ jobs:
         
       - name: Create github release
         id: create_release
-        uses: softprops/action-gh-release@v2
+
         with:
-          tag_name: ${{ inputs.tagName }}
-          release_name: "${{ inputs.tagName }}"
-          body: "Release notes for ${{ inputs.tagName }}"
-          generate_release_notes: true
-          make_latest: true
-          draft: true
-          prerelease: false
-          # token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating GitHub release for tag ${{ inputs.tagName }}"
+          gh release create ${{ inputs.tagName }} --verify-tag --title ${{ inputs.tagName }} --generate-notes --notes-start-tag ${{ inputs.pervTagName }} --target ${{ inputs.rcBranch }} --latest
+          if [ $? -ne 0 ]; then
+            echo "Failed to create GitHub release, please create it manually."
+            exit 1
+          fi
+          echo "GitHub release created successfully."
 
       - name: Merge RC to main
         id: merge_to_master
