@@ -140,8 +140,8 @@ jobs:
             echo "Merge to next RC branch successful."
           fi
 
-      - name: Create pull request to master
-        id: create_pull_request_to_master
+      - name: Create pull request to rc branch
+        id: create_pull_request_to_rc
         uses: peter-evans/create-pull-request@v7
         if: env.merge_status == 'failed'
         with:
