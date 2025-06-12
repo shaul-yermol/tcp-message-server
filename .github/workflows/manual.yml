@@ -28,29 +28,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+          ref: ${{ inputs.rcBranch }}
 
       - name: Create tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git checkout ${{ inputs.rcBranch }}
-          git pull origin ${{ inputs.rcBranch }}
           git tag -a ${{ inputs.tagName }} -m "Release ${{ inputs.tagName }}"
           git push origin ${{ inputs.tagName }}
 
       - name: Merge RC to main
         run: |
+          git fetch origin master
           git checkout master
           git merge --no-ff ${{ inputs.rcBranch }} -m "Sync after ${{ inputs.tagName }}"
           git push origin master
 
       - name: Create next RC branch
         run: |
-          git checkout -b ${{ inputs.nextRcBranch }}
-          git push origin ${{ inputs.nextRcBranch }}
+          git fetch origin ${{ inputs.nextRcBranch }} || true
+          git checkout master
+          git pull origin master
+          git checkout -b ${{ inputs.nextRcBranch }} || true
+          git push origin ${{ inputs.nextRcBranch }} || true
 
       - name: Merge master to next RC branch
         run: |
+          git fetch origin ${{ inputs.nextRcBranch }}
           git checkout ${{ inputs.nextRcBranch }}
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
