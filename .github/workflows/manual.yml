@@ -125,21 +125,19 @@ jobs:
 
       - name: Merge master to next RC branch
         id: merge_next_rc
-        outputs:
-          merge_status: ${{ steps.merge_next_rc.merge_status }}
         run: |
           git fetch origin ${{ inputs.nextRcBranch }}
           git checkout ${{ inputs.nextRcBranch }}
           git pull origin ${{ inputs.nextRcBranch }}
           git log | head -n 10
-          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || echo "merge_status=failed" >> "$GITHUB_OUTPUT"
+          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || echo "merge_status=failed" >> "$GITHUB_ENV"
           git push origin ${{ inputs.nextRcBranch }}
           echo "Merge to next RC branch successful."
 
       - name: Create pull request to master
         id: create_pull_request_to_master
         uses: peter-evans/create-pull-request@v7
-        if: steps.merge_next_rc.merge_status == 'failed'
+        if: env.merge_status == 'failed'
         with:
           branch: ${{ inputs.nextRcBranch }}
           title: "Sync after ${{ inputs.tagName }}"
