@@ -31,38 +31,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
+        id: checkout_code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Fetch all history for all branches and tags
           ref: ${{ inputs.rcBranch }}
 
       - name: Set up Git
+        id: setup_git
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "<github-actions@users.noreply.github.com>"
 
       - name: Validate inputs
+        id: validate_inputs
         run: |
           echo "RC Branch: ${{ inputs.rcBranch }}"
           echo "Tag Name: ${{ inputs.tagName }}"
           echo "Next RC Branch: ${{ inputs.nextRcBranch }}"
           # Ensure the tag name is valid
           if [[ ! "${{ inputs.tagName }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-            echo "\033[31mInvalid tag name: ${{ inputs.tagName }}\033[0m"
+            echo Invalid tag name: ${{ inputs.tagName }}"
             exit 1
           fi
           # Ensure the branch exists
           if ! git show-ref --verify --quiet refs/heads/${{ inputs.rcBranch }}; then
-            echo "\033[31mBranch ${{ inputs.rcBranch }} does not exist.\033[0m"
+            echo Branch ${{ inputs.rcBranch }} does not exist."
             exit 1
           fi
           # Ensure the tag does not already exist
           if git tag -l | grep -q "${{ inputs.tagName }}"; then
-            echo "\033[31mTag ${{ inputs.tagName }} already exists.\033[0m"
+            echo Tag ${{ inputs.tagName }} already exists."
             exit 1
           fi
 
       - name: Create tag
+        id: create_tag
         run: |
           # Create the tag
           echo "Creating tag ${{ inputs.tagName }} on branch ${{ inputs.rcBranch }}"
@@ -74,6 +78,7 @@ jobs:
           git push origin ${{ inputs.tagName }}
         
       - name: Create github release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tagName }}
@@ -86,6 +91,7 @@ jobs:
           # token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge RC to main
+        id: merge_to_master
         run: |
           git fetch origin master
           git checkout master
@@ -93,14 +99,15 @@ jobs:
           git log | head -n 10
           git merge --no-ff ${{ inputs.rcBranch }} -m "Sync after ${{ inputs.tagName }}" || export MERGE_TO_MASTER_FAILED=TRUE
           if [ -n "$MERGE_TO_MASTER_FAILED" ]; then
-            echo "\033[31mMerge to master failed, please resolve conflicts manually.\033[0m"
+            echo Merge to master failed, please resolve conflicts manually."
             exit -1
           else
             git push origin master
-            echo "\033[32mMerge to master successful.\033[0m"
+            echo "Merge to master successful."
           fi
 
       - name: Create next RC branch
+        id: create_next_rc
         run: |
           # check if next RC branch exists, if not create it
           exists=$(git branch -r | grep "origin/${{ inputs.nextRcBranch }}")
@@ -113,27 +120,25 @@ jobs:
             git checkout -b ${{ inputs.nextRcBranch }} || true
             git push origin ${{ inputs.nextRcBranch }} || true
           else
-            echo "\033[32mNext RC branch already exists, skipping creation.\033[0m"
+            echo "Next RC branch already exists, skipping creation."
           fi
 
       - name: Merge master to next RC branch
+        id: merge_next_rc
+        continue-on-error: true
         run: |
           git fetch origin ${{ inputs.nextRcBranch }}
           git checkout ${{ inputs.nextRcBranch }}
           git pull origin ${{ inputs.nextRcBranch }}
           git log | head -n 10
-          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export MERGE_TO_RC_FAILED=TRUE
-          if [ -n "$MERGE_TO_RC_FAILED" ]; then
-            echo "\033[31mMerge to next RC branch failed, please resolve conflicts manually.\033[0m"
-            env.MERGE_TO_RC_FAILED= 'TRUE'
-          else
-            echo "\033[32mMerge to next RC branch successful.\033[0m"
-            git push origin ${{ inputs.nextRcBranch }}
-          fi
+          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
+          git push origin ${{ inputs.nextRcBranch }}
+          echo "Merge to next RC branch successful."
 
       - name: Create pull request to master
+        id: create_pull_request_to_master
         uses: peter-evans/create-pull-request@v7
-        if: ${ env.MERGE_TO_RC_FAILED == 'TRUE' }
+        if: failed() && steps.merge_next_rc.outcome == 'failure'
         with:
           branch: ${{ inputs.nextRcBranch }}
           title: "Sync after ${{ inputs.tagName }}"
