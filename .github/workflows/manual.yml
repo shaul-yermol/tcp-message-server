@@ -121,40 +121,34 @@ jobs:
             git push origin ${{ inputs.nextRcBranch }} || true
           else
             echo "Next RC branch already exists, skipping creation."
-            git fetch origin ${{ inputs.nextRcBranch }}
-            git checkout ${{ inputs.nextRcBranch }}
-            git pull origin ${{ inputs.nextRcBranch }}
+            echo "create_status=failed" >> "$GITHUB_ENV"
             git log | head -n 10
           fi
 
       - name: Merge master to next RC branch
         id: merge_next_rc
+        if: env.create_status == 'failed'
         run: |
           git fetch origin ${{ inputs.nextRcBranch }}
           git checkout ${{ inputs.nextRcBranch }}
           git pull origin ${{ inputs.nextRcBranch }}
           git log | head -n 10
-          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export merge_status=failed && echo "merge_status=failed" >> "$GITHUB_ENV"
+          git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export merge_status=failed
           if [ -n "$merge_status" ]; then
             echo "Merge to next RC branch failed, please resolve conflicts manually."
             git merge --abort
             git checkout -f master
+
+            echo "Creating pull request to master from ${{ inputs.nextRcBranch }}"
+            gh pr create --base master --head ${{ inputs.nextRcBranch }} --title "Sync after ${{ inputs.tagName }}" --body "This PR syncs the latest changes from master to the next RC branch."
+
+            if [ $? -ne 0 ]; then
+              echo "Failed to create pull request, please create it manually."
+              exit 1
+            fi
+
           else 
             git push origin ${{ inputs.nextRcBranch }}
             echo "Merge to next RC branch successful."
           fi
-
-      - name: Create pull request to rc branch
-        id: create_pull_request_to_rc
-        uses: peter-evans/create-pull-request@v7
-        if: env.merge_status == 'failed'
-        with:
-          branch: ${{ inputs.nextRcBranch }}
-          title: "Sync after ${{ inputs.tagName }}"
-          body: "This PR merges changes from ${{ inputs.rcBranch }} into rc after creating tag ${{ inputs.tagName }}."
-          base: master
-          commit-message: "Merge ${{ inputs.rcBranch }} into rc after tag ${{ inputs.tagName }}"
-          # token: ${{ secrets.GITHUB_TOKEN }}
-
-          # test for conflict 222
 
