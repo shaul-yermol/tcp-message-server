@@ -133,6 +133,8 @@ jobs:
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export merge_status=failed && echo "merge_status=failed" >> "$GITHUB_ENV"
           if [ -n "$merge_status" ]; then
             echo "Merge to next RC branch failed, please resolve conflicts manually."
+            git merge --abort
+            git checkout -f master
           else 
             git push origin ${{ inputs.nextRcBranch }}
             echo "Merge to next RC branch successful."
