@@ -59,6 +59,17 @@ jobs:
           git log | head -n 10
           git tag -a ${{ inputs.tagName }} -m "Release ${{ inputs.tagName }}"
           git push origin ${{ inputs.tagName }}
+        
+      - name Crate github release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.tagName }}
+          release_name: "Release ${{ inputs.tagName }}"
+          body: "Release notes for ${{ inputs.tagName }}"
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge RC to main
         run: |
