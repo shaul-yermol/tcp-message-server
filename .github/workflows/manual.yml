@@ -138,7 +138,7 @@ jobs:
       - name: Create pull request to master
         id: create_pull_request_to_master
         uses: peter-evans/create-pull-request@v7
-        if: steps.merge_next_rc.outcome == 'failure'
+        if: steps.merge_next_rc.outcome == "failure"
         with:
           branch: ${{ inputs.nextRcBranch }}
           title: "Sync after ${{ inputs.tagName }}"
