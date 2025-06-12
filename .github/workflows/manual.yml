@@ -152,3 +152,5 @@ jobs:
           commit-message: "Merge ${{ inputs.rcBranch }} into rc after tag ${{ inputs.tagName }}"
           # token: ${{ secrets.GITHUB_TOKEN }}
 
+          # test for conflict
+
