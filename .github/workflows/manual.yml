@@ -140,7 +140,7 @@ jobs:
             git checkout -f master
 
             echo "Creating pull request to master from ${{ inputs.nextRcBranch }}"
-            gh pr create --base ${{ inputs.nextRcBranch }} --head master --title "Sync after ${{ inputs.tagName }}" --body "This PR syncs the latest changes from master to the next RC branch."
+            gh pr create --base ${{ inputs.nextRcBranch }} --head master --title "Sync after ${{ inputs.tagName }}" --body "Sync after ${{ inputs.tagName }}"
 
             if [ $? -ne 0 ]; then
               echo "Failed to create pull request, please create it manually."
