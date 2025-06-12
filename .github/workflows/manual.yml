@@ -121,6 +121,10 @@ jobs:
             git push origin ${{ inputs.nextRcBranch }} || true
           else
             echo "Next RC branch already exists, skipping creation."
+            git fetch origin ${{ inputs.nextRcBranch }}
+            git checkout ${{ inputs.nextRcBranch }}
+            git pull origin ${{ inputs.nextRcBranch }}
+            git log | head -n 10
           fi
 
       - name: Merge master to next RC branch
