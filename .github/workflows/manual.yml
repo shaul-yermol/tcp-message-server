@@ -34,8 +34,23 @@ jobs:
 
       - name: Create tag
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          # Ensure the tag name is valid
+          if [[ ! "${{ inputs.tagName }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+            echo "Invalid tag name: ${{ inputs.tagName }}"
+            exit 1
+          fi
+          # Ensure the branch exists
+          if ! git show-ref --verify --quiet refs/heads/${{ inputs.rcBranch }}; then
+            echo "Branch ${{ inputs.rcBranch }} does not exist."
+            exit 1
+          fi
+          # Ensure the tag does not already exist
+          if git tag -l | grep -q "${{ inputs.tagName }}"; then
+            echo "Tag ${{ inputs.tagName }} already exists."
+            exit 1
+          fi
+          # Create the tag
+          echo "Creating tag ${{ inputs.tagName }} on branch ${{ inputs.rcBranch }}"
           git fetch origin ${{ inputs.rcBranch }}
           git checkout ${{ inputs.rcBranch }}
           git pull origin ${{ inputs.rcBranch }}
@@ -54,12 +69,19 @@ jobs:
 
       - name: Create next RC branch
         run: |
-          git fetch origin ${{ inputs.nextRcBranch }} || true
-          git checkout master
-          git pull origin master
-          git log | head -n 10
-          git checkout -b ${{ inputs.nextRcBranch }} || true
-          git push origin ${{ inputs.nextRcBranch }} || true
+          # check if next RC branch exists, if not create it
+          exists=$(git branch -r | grep "origin/${{ inputs.nextRcBranch }}")
+          if [ -z "$exists" ]; then
+            echo "Next RC branch does not exist, creating it."
+            git fetch origin ${{ inputs.nextRcBranch }} || true
+            git checkout master
+            git pull origin master
+            git log | head -n 10
+            git checkout -b ${{ inputs.nextRcBranch }} || true
+            git push origin ${{ inputs.nextRcBranch }} || true
+          else
+            echo "Next RC branch already exists, skipping creation."
+          fi
 
       - name: Merge master to next RC branch
         run: |
@@ -70,5 +92,4 @@ jobs:
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
         
-      - name: Clean up
-        run: |
+
