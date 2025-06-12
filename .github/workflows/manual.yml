@@ -38,6 +38,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git fetch origin ${{ inputs.rcBranch }}
           git checkout ${{ inputs.rcBranch }}
+          git pull origin ${{ inputs.rcBranch }}
           git tag -a ${{ inputs.tagName }} -m "Release ${{ inputs.tagName }}"
           git push origin ${{ inputs.tagName }}
 
@@ -45,6 +46,7 @@ jobs:
         run: |
           git fetch origin master
           git checkout master
+          git pull origin master
           git merge --no-ff ${{ inputs.rcBranch }} -m "Sync after ${{ inputs.tagName }}"
           git push origin master
 
@@ -60,6 +62,8 @@ jobs:
         run: |
           git fetch origin ${{ inputs.nextRcBranch }}
           git checkout ${{ inputs.nextRcBranch }}
+          git pull origin ${{ inputs.nextRcBranch }}
+          git pull origin master
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
 
