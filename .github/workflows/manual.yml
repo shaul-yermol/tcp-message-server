@@ -125,6 +125,7 @@ jobs:
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}" || export MERGE_TO_RC_FAILED=TRUE
           if [ -n "$MERGE_TO_RC_FAILED" ]; then
             echo "\033[31mMerge to next RC branch failed, please resolve conflicts manually.\033[0m"
+            env.MERGE_TO_RC_FAILED= 'TRUE'
           else
             echo "\033[32mMerge to next RC branch successful.\033[0m"
             git push origin ${{ inputs.nextRcBranch }}
