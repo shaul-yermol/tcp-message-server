@@ -81,8 +81,6 @@ jobs:
         
       - name: Create github release
         id: create_release
-
-        with:
         run: |
           echo "Creating GitHub release for tag ${{ inputs.tagName }}"
           gh release create ${{ inputs.tagName }} --verify-tag --title ${{ inputs.tagName }} --generate-notes --notes-start-tag ${{ inputs.pervTagName }} --target ${{ inputs.rcBranch }} --latest
