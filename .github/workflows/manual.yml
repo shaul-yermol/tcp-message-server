@@ -151,5 +151,4 @@ jobs:
             git push origin ${{ inputs.nextRcBranch }}
             echo "Merge to next RC branch successful."
           fi
-
 # test
