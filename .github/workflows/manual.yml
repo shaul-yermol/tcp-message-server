@@ -62,5 +62,4 @@ jobs:
           git checkout ${{ inputs.nextRcBranch }}
           git merge --no-ff master -m "Sync after ${{ inputs.tagName }}"
           git push origin ${{ inputs.nextRcBranch }}
-          # Optionally, you can create a pull request for the next RC branch
 
